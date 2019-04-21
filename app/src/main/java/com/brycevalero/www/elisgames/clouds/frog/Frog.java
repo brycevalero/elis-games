@@ -13,8 +13,13 @@ import com.brycevalero.www.elisgames.game.elements.BitmapObject;
 import com.brycevalero.www.elisgames.utilities.Utilities;
 
 /**
- * Created by bryce on 12/24/2015.
- */
+* Frog bitmap object
+*
+* <P>Representation of frog image on screen.
+*
+* @author Bryce Valero
+* @version 1.0
+*/
 public class Frog extends BitmapObject {
 
     public static final int IDLE = 0;
@@ -41,26 +46,24 @@ public class Frog extends BitmapObject {
 
     public void update()
     {
-        if(this.currentState == Frog.FLOATING)
-            this.setObjectY(getObjectY() + floatingSpeed);
-
-        if(this.currentState == Frog.FALLING)
-            this.setObjectY(getObjectY() + fallingSpeed);
-    }
-
-    public void updateState()
-    {
-        //if out of bounds change state
+        //Then update the y axis of image
         switch (currentState) {
             case Frog.FLOATING:
-                if (this.getObjectY() < -400) {
+                this.setObjectY(getObjectY() + floatingSpeed);
+
+                if (this.getObjectY() < (this.getObjectH() * -1)) {
                     this.resetLocation();
                 }
+
                 break;
+
             case Frog.FALLING:
+                this.setObjectY(getObjectY() + fallingSpeed);
+
                 if (this.getObjectY() > (this.bounds.y + this.getObjectH())) {
                     this.setCurrentState(Frog.IDLE);
                 }
+
                 break;
         }
     }
@@ -125,8 +128,8 @@ public class Frog extends BitmapObject {
     public boolean isTouched(MotionEvent event)
     {
         if(currentState == Frog.FLOATING) {
-            if (event.getY() > this.getObjectY() && event.getY() < this.getObjectY() + 400){
-                if (event.getX() > this.getObjectX() && event.getX() < this.getObjectX() + 200) {
+            if (event.getY() > this.getObjectY() && event.getY() < this.getObjectY() + this.getObjectH()){
+                if (event.getX() > this.getObjectX() && event.getX() < this.getObjectX() + this.getObjectW()) {
                     return true;
                 }
             }

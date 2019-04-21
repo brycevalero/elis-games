@@ -5,6 +5,7 @@ package com.brycevalero.www.elisgames.clouds;
  */
 import android.app.ActionBar;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -85,20 +86,22 @@ public class CloudsView extends SurfaceView implements SurfaceHolder.Callback
     @Override
     public void surfaceCreated(SurfaceHolder holder)
     {
-        bg = new Background(this.getContext(), BitmapFactory.decodeResource(getResources(), R.drawable.clouds_bottom), this.screen.x, this.screen.y);
-        bgTop = new Background(this.getContext(), BitmapFactory.decodeResource(getResources(), R.drawable.clouds_top), this.screen.x, this.screen.y);
+        bg = new Background(this.getContext(), BitmapFactory.decodeResource(getResources(), R.drawable.clouds_bottom), this.screen);
+        bgTop = new Background(this.getContext(), BitmapFactory.decodeResource(getResources(), R.drawable.clouds_top), this.screen);
 
         frogFloatingImg = BitmapFactory.decodeResource(getResources(), R.drawable.frogfloating);
         frogFallingImg = BitmapFactory.decodeResource(getResources(), R.drawable.frogfalling);
 
+        //create our frogs and let them loose
         for(int i = 0; i < frogs.length; i++)
         {
             frogs[i] = new Frog(this.getContext(), this.screen);
             frogs[i].setFloatingImg(frogFloatingImg);
             frogs[i].setFallingImg(frogFallingImg);
-            frogs[i].setCurrentState(Frog.FLOATING);
+            frogs[i].letLoose();
         }
 
+        //how fast we paralax our two backgrounds
         bg.setVerticalVector(3);
         bgTop.setVerticalVector(7);
 
@@ -111,14 +114,25 @@ public class CloudsView extends SurfaceView implements SurfaceHolder.Callback
         player.start();
 
     }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        // Checks the orientation of the screen
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            //Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
+            System.out.println("ORIENTATION_LANDSCAPE");
+
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            //Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
+            System.out.println("ORIENTATION_PORTRAIT");
+        }
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
-        System.out.println("---------------------------------");
-        System.out.println(event.getX());
-        System.out.println(event.getY());
-        System.out.println("---------------------------------");
-
         for(int i = 0; i < frogs.length; i++)
         {
             if(frogs[i].isTouched(event))
@@ -144,14 +158,10 @@ public class CloudsView extends SurfaceView implements SurfaceHolder.Callback
 
             switch (frogs[i].getCurrentState())
             {
-                //If idle, dont do anything...
-                case Frog.IDLE:
-                    break;
                 //But if we are moving, we have to check the bounds
                 case Frog.FLOATING:
                 case Frog.FALLING:
                     somethingsMoving = true;
-                    frogs[i].updateState();
                     break;
             }
         }

@@ -1,19 +1,29 @@
 package com.brycevalero.www.elisgames.game.elements;
 
-/**
- * Created by bryce on 12/7/2015.
- */
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 
+/**
+* Bitmap Object
+*
+* <P>Representation of image on screen.
+*
+* @author Bryce Valero
+* @version 1.0
+*/
 public class BitmapObject extends ImageView{
 
     private Bitmap image;
     private int x, y, dx, dy, objectH, objectW;
 
+    /**
+    * Constructor.
+    *
+    * @param context (required)
+    */
     public BitmapObject(Context context)
     {
         super(context);
@@ -29,31 +39,31 @@ public class BitmapObject extends ImageView{
         image = res;
         dx = 0;
         dy = 0;
-        objectH = 0;
-        objectW = 0;
+        objectH = res.getHeight();
+        objectW = res.getWidth();
     }
 
     public void update()
     {
         y+=dy;
-        if(y>objectH){
-            y=0;
-        }
     }
 
     public void draw(Canvas canvas)
     {
         super.draw(canvas);
         canvas.drawBitmap(image, x, y,null);
-        if(y>0)
-        {
-            canvas.drawBitmap(image, x, y-objectH, null);
-        }
+    }
+
+    public Bitmap getImage()
+    {
+        return this.image;
     }
 
     public void setImage(Bitmap res)
     {
         this.image = res;
+        objectH = res.getHeight();
+        objectW = res.getWidth();
     }
 
     public void setVerticalVector(int dy)
