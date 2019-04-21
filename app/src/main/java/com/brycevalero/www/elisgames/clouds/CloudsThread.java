@@ -21,6 +21,7 @@ public class CloudsThread extends Thread{
         this.surfaceHolder = surfaceHolder;
         this.gamePanel = gamePanel;
     }
+
     @Override
     public void run()
     {
@@ -36,15 +37,20 @@ public class CloudsThread extends Thread{
             canvas = null;
 
             //try locking the canvas for pixel editing
-            try {
+            try
+            {
                 canvas = this.surfaceHolder.lockCanvas();
                 synchronized (surfaceHolder) {
                     this.gamePanel.update();
                     this.gamePanel.draw(canvas);
                 }
-            } catch (Exception e) {
             }
-            finally{
+            catch (Exception e)
+            {
+
+            }
+            finally
+            {
                 if(canvas!=null)
                 {
                     try {
@@ -54,15 +60,14 @@ public class CloudsThread extends Thread{
                 }
             }
 
-
-
-
             timeMillis = (System.nanoTime() - startTime) / 1000000;
             waitTime = targetTime-timeMillis;
 
-            try{
+            try
+            {
                 this.sleep(waitTime);
-            }catch(Exception e){}
+            }
+            catch(Exception e){}
 
             totalTime += System.nanoTime()-startTime;
             frameCount++;
@@ -75,6 +80,7 @@ public class CloudsThread extends Thread{
             }
         }
     }
+
     public void setRunning(boolean b)
     {
         running=b;

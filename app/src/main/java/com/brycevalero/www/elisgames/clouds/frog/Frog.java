@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Point;
 import android.text.method.Touch;
 import android.view.MotionEvent;
 
@@ -21,22 +22,21 @@ public class Frog extends BitmapObject {
     public static final int FALLING = 2;
 
     public int currentState;
+    public Point bounds;
     public int floatingSpeed, fallingSpeed;
     public Bitmap floatingImg, fallingImg;
 
-    public Frog(Context context, Bitmap res)
+    public Frog(Context context, Point bounds)
     {
-        super(context, res);
+        super(context);
+
+        this.bounds = bounds;
+        this.floatingSpeed = Utilities.rndInt(5, 15) * -1;
+        this.fallingSpeed = 30;
+
         setVerticalVector(0);
         setHorizontalVector(0);
-        setObjectH(0);
-        setObjectW(200);
-        setCurrentState(Frog.FLOATING);
-        setObjectX(Utilities.rndInt(0, 720 - getObjectW()));
-        setObjectY(1280);
-
-        floatingSpeed = Utilities.rndInt(5, 15) * -1;
-        fallingSpeed = 30;
+        resetLocation();
     }
 
     public void update()
@@ -48,10 +48,48 @@ public class Frog extends BitmapObject {
             this.setObjectY(getObjectY() + fallingSpeed);
     }
 
+    public void updateState()
+    {
+        //if out of bounds change state
+        switch (currentState) {
+            case Frog.FLOATING:
+                if (this.getObjectY() < -400) {
+                    this.resetLocation();
+                }
+                break;
+            case Frog.FALLING:
+                if (this.getObjectY() > (this.bounds.y + this.getObjectH())) {
+                    this.setCurrentState(Frog.IDLE);
+                }
+                break;
+        }
+    }
+
+    public void letLoose()
+    {
+        this.setCurrentState(Frog.FLOATING);
+    }
 
     public void setCurrentState(int state)
     {
-        currentState = state;
+        //Only set new state if it is different
+        if(currentState != state)
+        {
+            currentState = state;
+
+            //Then update the image accordingly
+            switch (currentState) {
+                case Frog.IDLE:
+                case Frog.FLOATING:
+                    setImage(floatingImg);
+                    break;
+                case Frog.FALLING:
+                    setImage(fallingImg);
+                    break;
+            }
+
+            System.out.println("New State: " + currentState);
+        }
     }
 
     public int getCurrentState()
@@ -77,30 +115,22 @@ public class Frog extends BitmapObject {
         this.fallingImg = img;
     }
 
-    public boolean inBounds(float x, float y)
+    public void resetLocation()
+    {
+        setObjectX(Utilities.rndInt(0, this.bounds.x - getObjectW()));
+        setObjectY(this.bounds.y);
+        setFloatingSpeed(Utilities.rndInt(5, 15) * -1);
+    }
+
+    public boolean isTouched(MotionEvent event)
     {
         if(currentState == Frog.FLOATING) {
-            if (y > this.getObjectY() && y < this.getObjectY() + 400){
-                if (x > this.getObjectX() && x < this.getObjectX() + 200) {
+            if (event.getY() > this.getObjectY() && event.getY() < this.getObjectY() + 400){
+                if (event.getX() > this.getObjectX() && event.getX() < this.getObjectX() + 200) {
                     return true;
                 }
             }
         }
         return false;
-    }
-
-    public void resetFrog()
-    {
-        setCurrentState(Frog.FLOATING);
-        setImage(floatingImg);
-        setFloatingSpeed(Utilities.rndInt(5, 15) * -1);
-        setObjectY(1280);
-        setObjectX(Utilities.rndInt(0, 720 - getObjectW()));
-    }
-
-    public void idleFrog()
-    {
-        resetFrog();
-        setCurrentState(Frog.IDLE);
     }
 }

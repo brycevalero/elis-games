@@ -8,11 +8,15 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Point;
 import android.media.MediaPlayer;
+import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 import com.brycevalero.www.elisgames.clouds.frog.Frog;
@@ -23,8 +27,7 @@ import com.brycevalero.www.elisgames.R;
 
 public class CloudsView extends SurfaceView implements SurfaceHolder.Callback
 {
-    public static final int WIDTH = 720;
-    public static final int HEIGHT = 1280;
+    public static Point screen;
     private CloudsThread thread;
     private Background bg;
     private Background bgTop;
@@ -45,50 +48,59 @@ public class CloudsView extends SurfaceView implements SurfaceHolder.Callback
 
         //make gamePanel focusable so it can handle events
         setFocusable(true);
+
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+        DisplayMetrics metrics = new DisplayMetrics();
+        display.getMetrics(metrics);
+        screen = new Point();
+        screen.set(metrics.widthPixels, metrics.heightPixels);
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height){}
 
     @Override
-    public void surfaceDestroyed(SurfaceHolder holder){
+    public void surfaceDestroyed(SurfaceHolder holder)
+    {
         boolean retry = true;
         while(retry)
         {
-            try{thread.setRunning(false);
+            try
+            {
+                thread.setRunning(false);
                 thread.join();
-
-            }catch(InterruptedException e){e.printStackTrace();}
+            }
+            catch(InterruptedException e)
+            {
+                e.printStackTrace();
+            }
             retry = false;
         }
 
         player.stop();
         player.release();
-
     }
 
     @Override
-    public void surfaceCreated(SurfaceHolder holder){
-        bg = new Background(this.getContext(), BitmapFactory.decodeResource(getResources(), R.drawable.clouds_bottom));
-        bgTop = new Background(this.getContext(), BitmapFactory.decodeResource(getResources(), R.drawable.clouds_top));
+    public void surfaceCreated(SurfaceHolder holder)
+    {
+        bg = new Background(this.getContext(), BitmapFactory.decodeResource(getResources(), R.drawable.clouds_bottom), this.screen.x, this.screen.y);
+        bgTop = new Background(this.getContext(), BitmapFactory.decodeResource(getResources(), R.drawable.clouds_top), this.screen.x, this.screen.y);
 
         frogFloatingImg = BitmapFactory.decodeResource(getResources(), R.drawable.frogfloating);
         frogFallingImg = BitmapFactory.decodeResource(getResources(), R.drawable.frogfalling);
 
-        for(int i = 0; i < frogs.length; i++){
-            frogs[i] = new Frog(this.getContext(), frogFloatingImg);
+        for(int i = 0; i < frogs.length; i++)
+        {
+            frogs[i] = new Frog(this.getContext(), this.screen);
             frogs[i].setFloatingImg(frogFloatingImg);
             frogs[i].setFallingImg(frogFallingImg);
+            frogs[i].setCurrentState(Frog.FLOATING);
         }
 
         bg.setVerticalVector(3);
         bgTop.setVerticalVector(7);
-
-        bg.setObjectH(CloudsView.HEIGHT);
-        bgTop.setObjectH(CloudsView.HEIGHT);
-
-        bg.setObjectW(CloudsView.WIDTH);
-        bgTop.setObjectW(CloudsView.WIDTH);
 
         //we can safely start the game loop
         thread.setRunning(true);
@@ -107,11 +119,11 @@ public class CloudsView extends SurfaceView implements SurfaceHolder.Callback
         System.out.println(event.getY());
         System.out.println("---------------------------------");
 
-        for(int i = 0; i < frogs.length; i++){
-            if(frogs[i].inBounds(event.getX(), event.getY()))
+        for(int i = 0; i < frogs.length; i++)
+        {
+            if(frogs[i].isTouched(event))
             {
                 frogs[i].setCurrentState(Frog.FALLING);
-                frogs[i].setImage(frogFallingImg);
                 SoundFX.playImpactSound(this.getContext());
                 SoundFX.playScreamSound(this.getContext());
             }
@@ -124,26 +136,33 @@ public class CloudsView extends SurfaceView implements SurfaceHolder.Callback
     {
         bg.update();
         bgTop.update();
+        boolean somethingsMoving = false;
 
-        int idleCount = 0;
-        for(int i = 0; i < frogs.length; i++){
+        for(int i = 0; i < frogs.length; i++)
+        {
             frogs[i].update();
 
-            if(frogs[i].getCurrentState() == Frog.IDLE)
+            switch (frogs[i].getCurrentState())
             {
-                idleCount++;
-            }
-            if(frogs[i].getObjectY() < -400) {
-                frogs[i].resetFrog();
-            }
-            if(frogs[i].getObjectY() > 2000){
-                frogs[i].idleFrog();
-
+                //If idle, dont do anything...
+                case Frog.IDLE:
+                    break;
+                //But if we are moving, we have to check the bounds
+                case Frog.FLOATING:
+                case Frog.FALLING:
+                    somethingsMoving = true;
+                    frogs[i].updateState();
+                    break;
             }
         }
-        if(idleCount == frogs.length){
-            for(int i = 0; i < frogs.length; i++) {
-                frogs[i].setCurrentState(Frog.FLOATING);
+
+        //if no frogs are moving (idled), let them loose
+        if(!somethingsMoving)
+        {
+            System.out.println("LET THEM ALL LOOSE");
+            for(int i = 0; i < frogs.length; i++)
+            {
+                frogs[i].letLoose();
             }
         }
     }
@@ -152,17 +171,17 @@ public class CloudsView extends SurfaceView implements SurfaceHolder.Callback
     public void draw(Canvas canvas)
     {
         super.draw(canvas);
-        final float scaleFactorX = getWidth()/WIDTH;
-        final float scaleFactorY = getHeight()/HEIGHT;
+        final float scaleFactorX = getWidth()/this.screen.x;
+        final float scaleFactorY = getHeight()/this.screen.y;
         if(canvas!=null)
         {
-
             final int savedState = canvas.save();
             canvas.scale(scaleFactorX, scaleFactorY);
             bg.draw(canvas);
             bgTop.draw(canvas);
 
-            for(int i = 0; i < frogs.length; i++){
+            for(int i = 0; i < frogs.length; i++)
+            {
                 frogs[i].draw(canvas);
             }
             canvas.restoreToCount(savedState);

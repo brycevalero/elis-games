@@ -9,11 +9,11 @@ import android.graphics.Canvas;
 
 public class Background extends BitmapObject{
 
-    public Background(Context context, Bitmap res)
+    public Background(Context context, Bitmap res, int w, int h)
     {
-        super(context, res);
+        super(context, Bitmap.createScaledBitmap(res, w, h, true));
         setVerticalVector(10);
-        setObjectH(1280);
-        setObjectW(720);
+        setObjectH(h);
+        setObjectW(w);
     }
 }

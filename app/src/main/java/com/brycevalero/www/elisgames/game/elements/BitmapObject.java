@@ -14,6 +14,15 @@ public class BitmapObject extends ImageView{
     private Bitmap image;
     private int x, y, dx, dy, objectH, objectW;
 
+    public BitmapObject(Context context)
+    {
+        super(context);
+        dx = 0;
+        dy = 0;
+        objectH = 0;
+        objectW = 0;
+    }
+
     public BitmapObject(Context context, Bitmap res)
     {
         super(context);
